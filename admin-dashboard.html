@@ -1,0 +1,385 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>داشبورد ادمین | ایمن جی استار</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="css/style.css">
+    <style>
+        .admin-body { background: var(--gray-light); min-height: 100vh; padding-top: 80px; }
+        .admin-header { background: linear-gradient(135deg, #0a0a0a, #1a1a1a); padding: 18px 0; position: fixed; top: 0; width: 100%; z-index: 100; }
+        .admin-header-inner { max-width: 1400px; margin: 0 auto; padding: 0 25px; display: flex; justify-content: space-between; align-items: center; }
+        .admin-title-bar { display: flex; align-items: center; gap: 12px; color: white; }
+        .admin-title-bar h1 { font-size: 1.2rem; font-weight: 700; }
+        .admin-actions { display: flex; gap: 10px; }
+        .admin-actions a, .admin-actions button { padding: 8px 18px; border-radius: 10px; font-weight: 600; font-size: 0.85rem; cursor: pointer; text-decoration: none; border: none; font-family: inherit; transition: all 0.3s; }
+        .btn-gold { background: var(--gold); color: var(--primary-dark); }
+        .btn-outline-white { background: transparent; color: white; border: 1px solid rgba(255,255,255,0.3); }
+        .btn-danger { background: #ef4444; color: white; }
+        .btn-success { background: #10b981; color: white; }
+        .admin-grid { max-width: 1400px; margin: 0 auto; padding: 25px; display: grid; grid-template-columns: 220px 1fr; gap: 25px; }
+        .admin-sidebar { background: white; border-radius: 16px; padding: 20px 12px; height: fit-content; position: sticky; top: 90px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .sidebar-menu { list-style: none; }
+        .sidebar-menu li { margin-bottom: 4px; }
+        .sidebar-menu a { display: flex; align-items: center; gap: 8px; padding: 10px 12px; border-radius: 10px; text-decoration: none; color: var(--text-dark); font-weight: 500; font-size: 0.9rem; transition: all 0.3s; cursor: pointer; }
+        .sidebar-menu a:hover, .sidebar-menu a.active { background: rgba(57,255,20,0.1); color: var(--green-dark); }
+        .sidebar-menu a.active { background: var(--green); color: var(--primary-dark); font-weight: 700; }
+        .panel { display: none; }
+        .panel.active { display: block; }
+        .panel-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 25px; }
+        .panel-title { font-size: 1.4rem; font-weight: 800; color: var(--text-dark); }
+        .stats-row { display: grid; grid-template-columns: repeat(4, 1fr); gap: 15px; margin-bottom: 25px; }
+        .stat-card { background: white; padding: 20px; border-radius: 14px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); text-align: center; }
+        .stat-card-icon { font-size: 1.8rem; margin-bottom: 8px; }
+        .stat-card-num { font-size: 1.8rem; font-weight: 900; color: var(--green); }
+        .stat-card-label { color: var(--text-light); font-size: 0.85rem; margin-top: 3px; }
+        .data-table { width: 100%; background: white; border-radius: 16px; overflow: hidden; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .data-table table { width: 100%; border-collapse: collapse; }
+        .data-table th { background: var(--primary-dark); color: white; padding: 12px 16px; text-align: right; font-weight: 600; font-size: 0.85rem; }
+        .data-table td { padding: 12px 16px; border-bottom: 1px solid var(--gray); font-size: 0.9rem; }
+        .data-table tr:last-child td { border-bottom: none; }
+        .badge { padding: 4px 10px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; }
+        .badge-blue { background: rgba(26,54,93,0.1); color: var(--primary); }
+        .badge-gold { background: rgba(57,255,20,0.15); color: var(--green-dark); }
+        .badge-green { background: rgba(16,185,129,0.1); color: #059669; }
+        .action-btns { display: flex; gap: 6px; }
+        .action-btn { width: 32px; height: 32px; border-radius: 8px; border: none; cursor: pointer; display: flex; align-items: center; justify-content: center; font-size: 0.9rem; transition: all 0.3s; }
+        .action-btn-edit { background: rgba(57,255,20,0.15); color: var(--green-dark); }
+        .action-btn-edit:hover { background: var(--green); color: var(--primary-dark); }
+        .action-btn-delete { background: rgba(239,68,68,0.1); color: #ef4444; }
+        .action-btn-delete:hover { background: #ef4444; color: white; }
+        .modal-overlay { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 1000; align-items: center; justify-content: center; }
+        .modal-overlay.active { display: flex; }
+        .modal { background: white; border-radius: 20px; padding: 30px; width: 520px; max-width: 95%; max-height: 90vh; overflow-y: auto; }
+        .modal-title { font-size: 1.2rem; font-weight: 700; margin-bottom: 20px; }
+        .modal-form .form-group { margin-bottom: 15px; }
+        .modal-form .form-group label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem; }
+        .modal-form input, .modal-form textarea, .modal-form select { width: 100%; padding: 10px 14px; border: 2px solid var(--gray); border-radius: 10px; font-family: inherit; font-size: 0.9rem; transition: all 0.3s; }
+        .modal-form input:focus, .modal-form textarea:focus { outline: none; border-color: var(--green); }
+        .modal-form textarea { height: 70px; resize: vertical; }
+        .modal-btns { display: flex; gap: 10px; margin-top: 20px; }
+        .modal-btns button { flex: 1; padding: 10px; border-radius: 10px; font-weight: 700; cursor: pointer; font-family: inherit; border: none; font-size: 0.95rem; }
+        .settings-card { background: white; border-radius: 16px; padding: 25px; margin-bottom: 18px; box-shadow: 0 5px 20px rgba(0,0,0,0.05); }
+        .settings-card h3 { font-size: 1rem; font-weight: 700; margin-bottom: 18px; padding-bottom: 10px; border-bottom: 2px solid var(--gray); }
+        .settings-row { display: grid; grid-template-columns: 1fr 1fr; gap: 15px; }
+        .settings-row .form-group { margin-bottom: 12px; }
+        .settings-row label { display: block; font-weight: 600; margin-bottom: 5px; font-size: 0.85rem; }
+        .settings-row input, .settings-row textarea { width: 100%; padding: 10px 14px; border: 2px solid var(--gray); border-radius: 10px; font-family: inherit; font-size: 0.9rem; transition: all 0.3s; }
+        .settings-row input:focus, .settings-row textarea:focus { outline: none; border-color: var(--green); }
+        .settings-row textarea { height: 80px; resize: vertical; }
+        .toast { position: fixed; bottom: 25px; left: 50%; transform: translateX(-50%) translateY(20px); background: #10b981; color: white; padding: 12px 25px; border-radius: 12px; font-weight: 600; z-index: 9999; opacity: 0; transition: all 0.4s; font-family: 'Vazirmatn', sans-serif; }
+        .toast.show { opacity: 1; transform: translateX(-50%) translateY(0); }
+        @media (max-width: 1024px) { .stats-row { grid-template-columns: repeat(2, 1fr); } .admin-grid { grid-template-columns: 1fr; } .admin-sidebar { position: static; } .settings-row { grid-template-columns: 1fr; } }
+    </style>
+</head>
+<body class="admin-body">
+
+<div class="admin-header">
+    <div class="admin-header-inner">
+        <div class="admin-title-bar">
+            <img src="images/logo.png" alt="ایمن جی استار" style="width:35px;height:35px;object-fit:contain;border-radius:8px;">
+            <h1>پنل مدیریت ایمن جی استار</h1>
+        </div>
+        <div class="admin-actions">
+            <a href="index.html" class="btn-outline-white" target="_blank">مشاهده سایت</a>
+            <button class="btn-danger" onclick="logout()">خروج</button>
+        </div>
+    </div>
+</div>
+
+<div class="admin-grid">
+    <div class="admin-sidebar">
+        <ul class="sidebar-menu">
+            <li><a class="active" onclick="showPanel('dashboard')">📊 داشبورد</a></li>
+            <li><a onclick="showPanel('hero')">🏠 بنر اصلی</a></li>
+            <li><a onclick="showPanel('products')">📦 محصولات</a></li>
+            <li><a onclick="showPanel('services')">🔧 خدمات</a></li>
+            <li><a onclick="showPanel('advantages')">⭐ مزایا</a></li>
+            <li><a onclick="showPanel('testimonials')">💬 نظرات</a></li>
+            <li><a onclick="showPanel('about')">📌 درباره ما</a></li>
+            <li><a onclick="showPanel('team')">👥 تیم</a></li>
+            <li><a onclick="showPanel('contact')">📞 تماس</a></li>
+            <li><a onclick="showPanel('settings')">⚙️ تنظیمات</a></li>
+        </ul>
+    </div>
+
+    <div class="admin-content">
+
+        <!-- داشبورد -->
+        <div class="panel active" id="panel-dashboard">
+            <div class="stats-row">
+                <div class="stat-card"><div class="stat-card-icon">📦</div><div class="stat-card-num" id="totalProducts">0</div><div class="stat-card-label">محصول</div></div>
+                <div class="stat-card"><div class="stat-card-icon">🔧</div><div class="stat-card-num" id="totalServices">0</div><div class="stat-card-label">خدمت</div></div>
+                <div class="stat-card"><div class="stat-card-icon">💬</div><div class="stat-card-num" id="totalTestimonials">0</div><div class="stat-card-label">نظر</div></div>
+                <div class="stat-card"><div class="stat-card-icon">📂</div><div class="stat-card-num" id="totalCategories">0</div><div class="stat-card-label">دسته‌بندی</div></div>
+            </div>
+            <div class="settings-card">
+                <h3>آخرین محصولات</h3>
+                <div id="recentProducts"></div>
+            </div>
+        </div>
+
+        <!-- بنر اصلی -->
+        <div class="panel" id="panel-hero">
+            <div class="panel-header"><h2 class="panel-title">🏠 بنر اصلی سایت</h2></div>
+            <div class="settings-card">
+                <h3>متن‌های بنر</h3>
+                <div class="settings-row">
+                    <div class="form-group"><label>برچسب بالای عنوان</label><input type="text" id="heroBadge"></div>
+                    <div class="form-group"><label>خط اول عنوان</label><input type="text" id="heroTitle"></div>
+                    <div class="form-group"><label>خط دوم عنوان (طلایی)</label><input type="text" id="heroTitleHighlight"></div>
+                    <div class="form-group"><label>دکمه اول</label><input type="text" id="heroBtn1"></div>
+                    <div class="form-group"><label>دکمه دوم</label><input type="text" id="heroBtn2"></div>
+                </div>
+                <div class="form-group" style="margin-top:10px;"><label>توضیحات بنر</label><textarea id="heroSubtitle" style="width:100%;padding:10px;border:2px solid var(--gray);border-radius:10px;font-family:inherit;height:80px;resize:vertical;"></textarea></div>
+                <button class="btn btn-primary" onclick="saveHero()" style="margin-top:15px;">ذخیره بنر</button>
+            </div>
+        </div>
+
+        <!-- محصولات -->
+        <div class="panel" id="panel-products">
+            <div class="panel-header">
+                <h2 class="panel-title">📦 مدیریت محصولات</h2>
+                <button class="btn btn-primary" onclick="openProductModal()">+ افزودن</button>
+            </div>
+            <div class="data-table">
+                <table>
+                    <thead><tr><th>محصول</th><th>دسته</th><th>قیمت</th><th>وضعیت</th><th>عملیات</th></tr></thead>
+                    <tbody id="productsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- خدمات -->
+        <div class="panel" id="panel-services">
+            <div class="panel-header">
+                <h2 class="panel-title">🔧 مدیریت خدمات</h2>
+                <button class="btn btn-primary" onclick="openServiceModal()">+ افزودن</button>
+            </div>
+            <div class="data-table">
+                <table>
+                    <thead><tr><th>آیکون</th><th>عنوان</th><th>توضیحات</th><th>عملیات</th></tr></thead>
+                    <tbody id="servicesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- مزایا -->
+        <div class="panel" id="panel-advantages">
+            <div class="panel-header">
+                <h2 class="panel-title">⭐ مدیریت مزایا</h2>
+                <button class="btn btn-primary" onclick="openAdvantageModal()">+ افزودن</button>
+            </div>
+            <div class="data-table">
+                <table>
+                    <thead><tr><th>عدد</th><th>عنوان</th><th>توضیحات</th><th>عملیات</th></tr></thead>
+                    <tbody id="advantagesTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- نظرات -->
+        <div class="panel" id="panel-testimonials">
+            <div class="panel-header">
+                <h2 class="panel-title">💬 مدیریت نظرات</h2>
+                <button class="btn btn-primary" onclick="openTestimonialModal()">+ افزودن</button>
+            </div>
+            <div class="data-table">
+                <table>
+                    <thead><tr><th>ستاره</th><th>شخص</th><th>متن</th><th>عملیات</th></tr></thead>
+                    <tbody id="testimonialsTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- درباره ما -->
+        <div class="panel" id="panel-about">
+            <div class="panel-header"><h2 class="panel-title">📌 درباره ما</h2></div>
+            <div class="settings-card">
+                <h3>محتوای درباره ما</h3>
+                <div class="settings-row">
+                    <div class="form-group"><label>عنوان</label><input type="text" id="aboutTitle"></div>
+                </div>
+                <div class="settings-row">
+                    <div class="form-group"><label>پاراگراف اول</label><textarea id="aboutText1"></textarea></div>
+                    <div class="form-group"><label>پاراگراف دوم</label><textarea id="aboutText2"></textarea></div>
+                </div>
+                <div class="form-group" style="margin-top:10px;"><label>ویژگی‌ها (هر کدام در یک خط)</label><textarea id="aboutFeatures" style="width:100%;padding:10px;border:2px solid var(--gray);border-radius:10px;font-family:inherit;height:100px;resize:vertical;"></textarea></div>
+                <button class="btn btn-primary" onclick="saveAbout()" style="margin-top:15px;">ذخیره</button>
+            </div>
+        </div>
+
+        <!-- تیم -->
+        <div class="panel" id="panel-team">
+            <div class="panel-header">
+                <h2 class="panel-title">👥 مدیریت تیم</h2>
+                <button class="btn btn-primary" onclick="openTeamModal()">+ افزودن</button>
+            </div>
+            <div class="data-table">
+                <table>
+                    <thead><tr><th>آواتار</th><th>نام</th><th>سمت</th><th>عملیات</th></tr></thead>
+                    <tbody id="teamTableBody"></tbody>
+                </table>
+            </div>
+        </div>
+
+        <!-- تماس -->
+        <div class="panel" id="panel-contact">
+            <div class="panel-header"><h2 class="panel-title">📞 اطلاعات تماس</h2></div>
+            <div class="settings-card">
+                <h3>اطلاعات شرکت</h3>
+                <div class="settings-row">
+                    <div class="form-group"><label>نام شرکت</label><input type="text" id="companyName"></div>
+                    <div class="form-group"><label>تلفن ثابت</label><input type="text" id="phone1"></div>
+                    <div class="form-group"><label>تلفن همراه</label><input type="text" id="phone2"></div>
+                    <div class="form-group"><label>ایمیل اصلی</label><input type="email" id="email1"></div>
+                    <div class="form-group"><label>ایمیل فروش</label><input type="email" id="email2"></div>
+                    <div class="form-group"><label>ساعات کاری</label><input type="text" id="workHours"></div>
+                </div>
+            </div>
+            <div class="settings-card">
+                <h3>آدرس</h3>
+                <div class="form-group"><input type="text" id="address" style="width:100%;padding:10px;border:2px solid var(--gray);border-radius:10px;font-family:inherit;"></div>
+            </div>
+            <div class="settings-card">
+                <h3>شبکه‌های اجتماعی</h3>
+                <div class="settings-row">
+                    <div class="form-group"><label>اینستاگرام</label><input type="text" id="instagram"></div>
+                    <div class="form-group"><label>تلگرام</label><input type="text" id="telegram"></div>
+                    <div class="form-group"><label>واتساپ</label><input type="text" id="whatsapp"></div>
+                    <div class="form-group"><label>لینکدین</label><input type="text" id="linkedin"></div>
+                </div>
+            </div>
+            <button class="btn btn-primary" onclick="saveContactInfo()">ذخیره اطلاعات</button>
+        </div>
+
+        <!-- تنظیمات -->
+        <div class="panel" id="panel-settings">
+            <div class="panel-header"><h2 class="panel-title">⚙️ تنظیمات</h2></div>
+            <div class="settings-card">
+                <h3>تغییر رمز عبور</h3>
+                <div class="settings-row">
+                    <div class="form-group"><label>رمز فعلی</label><input type="password" id="currentPass"></div>
+                    <div class="form-group"><label>رمز جدید</label><input type="password" id="newPass"></div>
+                </div>
+                <button class="btn btn-primary" onclick="changePassword()" style="margin-top:10px;">تغییر رمز</button>
+            </div>
+            <div class="settings-card">
+                <h3>پشتیبان‌گیری</h3>
+                <p style="color:var(--text-light);margin-bottom:15px;font-size:0.9rem;">اطلاعات در مرورگر ذخیره می‌شود. حتماً پشتیبان بگیرید.</p>
+                <div style="display:flex;gap:10px;flex-wrap:wrap;">
+                    <button class="btn btn-success" onclick="exportData()">خروجی JSON</button>
+                    <button class="btn btn-primary" onclick="document.getElementById('importFile').click()">ورودی JSON</button>
+                    <input type="file" id="importFile" accept=".json" style="display:none" onchange="importData(event)">
+                    <button class="btn btn-danger" onclick="resetAllData()">بازنشانی</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- مودال محصول -->
+<div class="modal-overlay" id="productModal">
+    <div class="modal">
+        <h2 class="modal-title" id="modalTitle">افزودن محصول</h2>
+        <form class="modal-form" id="productForm">
+            <input type="hidden" id="editProductId">
+            <div class="form-group"><label>نام محصول</label><input type="text" id="prodName" required></div>
+            <div class="form-group"><label>دسته‌بندی</label><select id="prodCategory"><option value="camera">دوربین</option><option value="nvr">دستگاه ضبط</option><option value="alarm">دزدگیر</option><option value="smart">سیستم هوشمند</option></select></div>
+            <div class="form-group"><label>توضیحات</label><textarea id="prodDesc"></textarea></div>
+            <div class="form-group"><label>قیمت (تومان)</label><input type="text" id="prodPrice"></div>
+            <div class="form-group"><label>برچسب</label><input type="text" id="prodBadge" placeholder="پرفروش / جدید"></div>
+            <div class="form-group">
+                <label>عکس محصول</label>
+                <div style="display:flex;gap:12px;align-items:center;">
+                    <div id="imagePreview" style="width:70px;height:70px;border-radius:12px;border:2px dashed var(--gray);display:flex;align-items:center;justify-content:center;font-size:1.8rem;overflow:hidden;background:var(--gray-light);">📷</div>
+                    <div style="flex:1;">
+                        <input type="file" id="prodImage" accept="image/*" style="display:none;" onchange="previewImage(event)">
+                        <button type="button" class="btn btn-outline" style="border:2px solid var(--gray);width:100%;justify-content:center;font-size:0.85rem;" onclick="document.getElementById('prodImage').click()">انتخاب عکس</button>
+                        <p style="font-size:0.75rem;color:var(--text-light);margin-top:6px;">یا ایموجی:</p>
+                        <input type="text" id="prodEmoji" placeholder="📷" maxlength="4" style="width:100%;padding:8px;border:2px solid var(--gray);border-radius:8px;font-family:inherit;margin-top:4px;">
+                    </div>
+                </div>
+            </div>
+            <div class="modal-btns">
+                <button type="submit" class="btn btn-primary" style="flex:2;">ذخیره</button>
+                <button type="button" class="btn" style="flex:1;background:var(--gray);color:var(--text-dark);" onclick="closeModal()">لغو</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- مودال خدمت -->
+<div class="modal-overlay" id="serviceModal">
+    <div class="modal">
+        <h2 class="modal-title" id="serviceModalTitle">افزودن خدمت</h2>
+        <form class="modal-form" id="serviceForm">
+            <input type="hidden" id="editServiceIndex">
+            <div class="form-group"><label>آیکون (ایموجی)</label><input type="text" id="servIcon" placeholder="🔧" maxlength="4"></div>
+            <div class="form-group"><label>عنوان</label><input type="text" id="servTitle" required></div>
+            <div class="form-group"><label>توضیحات</label><textarea id="servDesc"></textarea></div>
+            <div class="modal-btns">
+                <button type="submit" class="btn btn-primary" style="flex:2;">ذخیره</button>
+                <button type="button" class="btn" style="flex:1;background:var(--gray);color:var(--text-dark);" onclick="document.getElementById('serviceModal').classList.remove('active')">لغو</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- مودال نظر -->
+<div class="modal-overlay" id="testimonialModal">
+    <div class="modal">
+        <h2 class="modal-title" id="testModalTitle">افزودن نظر</h2>
+        <form class="modal-form" id="testimonialForm">
+            <input type="hidden" id="editTestIndex">
+            <div class="form-group"><label>نام</label><input type="text" id="testName" required></div>
+            <div class="form-group"><label>سمت</label><input type="text" id="testRole" placeholder="صاحب فروشگاه"></div>
+            <div class="form-group"><label>متن نظر</label><textarea id="testText"></textarea></div>
+            <div class="form-group"><label>تعداد ستاره</label><select id="testStars"><option value="5">★★★★★</option><option value="4">★★★★</option><option value="3">★★★</option></select></div>
+            <div class="modal-btns">
+                <button type="submit" class="btn btn-primary" style="flex:2;">ذخیره</button>
+                <button type="button" class="btn" style="flex:1;background:var(--gray);color:var(--text-dark);" onclick="document.getElementById('testimonialModal').classList.remove('active')">لغو</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- مودال مزیت -->
+<div class="modal-overlay" id="advantageModal">
+    <div class="modal">
+        <h2 class="modal-title" id="advModalTitle">افزودن مزیت</h2>
+        <form class="modal-form" id="advantageForm">
+            <input type="hidden" id="editAdvIndex">
+            <div class="form-group"><label>عدد</label><input type="text" id="advNumber" placeholder="۱۲"></div>
+            <div class="form-group"><label>عنوان</label><input type="text" id="advTitle" required></div>
+            <div class="form-group"><label>توضیحات</label><textarea id="advDesc"></textarea></div>
+            <div class="modal-btns">
+                <button type="submit" class="btn btn-primary" style="flex:2;">ذخیره</button>
+                <button type="button" class="btn" style="flex:1;background:var(--gray);color:var(--text-dark);" onclick="document.getElementById('advantageModal').classList.remove('active')">لغو</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<!-- مودال تیم -->
+<div class="modal-overlay" id="teamModal">
+    <div class="modal">
+        <h2 class="modal-title" id="teamModalTitle">افزودن عضو</h2>
+        <form class="modal-form" id="teamForm">
+            <input type="hidden" id="editTeamIndex">
+            <div class="form-group"><label>نام</label><input type="text" id="memberName" required></div>
+            <div class="form-group"><label>سمت</label><input type="text" id="memberRole" required></div>
+            <div class="modal-btns">
+                <button type="submit" class="btn btn-primary" style="flex:2;">ذخیره</button>
+                <button type="button" class="btn" style="flex:1;background:var(--gray);color:var(--text-dark);" onclick="document.getElementById('teamModal').classList.remove('active')">لغو</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<script src="js/admin.js"></script>
+</body>
+</html>

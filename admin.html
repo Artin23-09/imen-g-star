@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="fa" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ورود ادمین | ایمن جی استار</title>
+    <link href="https://fonts.googleapis.com/css2?family=Vazirmatn:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Vazirmatn', sans-serif;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .login-box {
+            background: rgba(255,255,255,0.05);
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(57,255,20,0.1);
+            border-radius: 24px;
+            padding: 50px 40px;
+            width: 420px;
+            max-width: 95%;
+        }
+        .login-header { text-align: center; margin-bottom: 40px; }
+        .login-logo {
+            width: 80px; height: 80px;
+            background: linear-gradient(135deg, #39ff14, #2bcc0f);
+            border-radius: 20px;
+            display: flex; align-items: center; justify-content: center;
+            font-size: 2.5rem; margin: 0 auto 20px; overflow: hidden;
+        }
+        .login-title { color: #fff; font-size: 1.8rem; font-weight: 800; }
+        .login-subtitle { color: #a0aec0; font-size: 0.95rem; margin-top: 8px; }
+        .form-group { margin-bottom: 22px; }
+        .form-group label {
+            color: #39ff14; font-size: 0.9rem; font-weight: 600;
+            margin-bottom: 8px; display: block;
+        }
+        .form-group input {
+            width: 100%; padding: 14px 18px;
+            border: 2px solid rgba(255,255,255,0.1);
+            border-radius: 12px; background: rgba(255,255,255,0.05);
+            color: #fff; font-size: 1rem; font-family: inherit;
+            transition: all 0.3s;
+        }
+        .form-group input:focus {
+            outline: none; border-color: #39ff14;
+            background: rgba(57,255,20,0.05);
+        }
+        .form-group input::placeholder { color: #5a6a7e; }
+        .login-btn {
+            width: 100%; padding: 15px; border: none; border-radius: 12px;
+            background: linear-gradient(135deg, #39ff14, #2bcc0f);
+            color: #0a0a0a; font-size: 1.1rem; font-weight: 700;
+            font-family: inherit; cursor: pointer; transition: all 0.3s;
+        }
+        .login-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 30px rgba(57,255,20,0.4);
+        }
+        .login-btn:disabled { opacity: 0.6; cursor: not-allowed; transform: none; }
+        .error-msg {
+            background: rgba(239,68,68,0.15);
+            border: 1px solid rgba(239,68,68,0.3);
+            color: #ef4444; padding: 12px; border-radius: 10px;
+            text-align: center; font-size: 0.9rem; margin-bottom: 20px;
+            display: none;
+        }
+        .back-link { text-align: center; margin-top: 25px; }
+        .back-link a {
+            color: #a0aec0; text-decoration: none; font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .back-link a:hover { color: #d4af37; }
+        .hint {
+            text-align: center; margin-top: 20px; padding: 12px;
+            background: rgba(57,255,20,0.1); border-radius: 10px;
+            color: #39ff14; font-size: 0.85rem;
+        }
+    </style>
+</head>
+<body>
+    <div class="login-box">
+        <div class="login-header">
+            <div class="login-logo">
+                <img src="images/logo.png" alt="ایمن جی استار" style="width:60px;height:60px;object-fit:contain;" onerror="this.style.display='none'">
+            </div>
+            <h1 class="login-title">پنل مدیریت</h1>
+            <p class="login-subtitle">ایمن جی استار - داشبورد ادمین</p>
+        </div>
+
+        <div class="error-msg" id="errorMsg">نام کاربری یا رمز عبور اشتباه است</div>
+
+        <form id="loginForm">
+            <div class="form-group">
+                <label>نام کاربری</label>
+                <input type="text" id="username" placeholder="admin" autocomplete="off">
+            </div>
+            <div class="form-group">
+                <label>رمز عبور</label>
+                <input type="password" id="password" placeholder="رمز عبور">
+            </div>
+            <button type="submit" class="login-btn" id="loginBtn">ورود به پنل</button>
+        </form>
+
+        <div class="hint">
+            پیش‌فرض: admin / admin123
+        </div>
+
+        <div class="back-link">
+            <a href="index.html">← بازگشت به سایت</a>
+        </div>
+    </div>
+
+    <script>
+        const API_BASE = window.location.origin.includes('localhost') || window.location.origin.includes('127.0.0.1')
+            ? 'http://127.0.0.1:5000'
+            : window.location.origin;
+
+        // اگر قبلاً لاگین کرده باشه
+        if (localStorage.getItem('admin_token')) {
+            window.location.href = 'admin-dashboard.html';
+        }
+
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const user = document.getElementById('username').value.trim();
+            const pass = document.getElementById('password').value;
+            const btn = document.getElementById('loginBtn');
+            const errorMsg = document.getElementById('errorMsg');
+
+            errorMsg.style.display = 'none';
+            btn.disabled = true;
+            btn.textContent = 'در حال ورود...';
+
+            try {
+                const res = await fetch(API_BASE + '/api/admin/login', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ username: user, password: pass })
+                });
+                const data = await res.json();
+
+                if (data.success && data.token) {
+                    localStorage.setItem('admin_token', data.token);
+                    window.location.href = 'admin-dashboard.html';
+                } else {
+                    errorMsg.textContent = data.message || 'نام کاربری یا رمز عبور اشتباه است';
+                    errorMsg.style.display = 'block';
+                }
+            } catch (err) {
+                errorMsg.textContent = 'خطا در ارتباط با سرور. مطمئن شوید بک‌اند روشن است.';
+                errorMsg.style.display = 'block';
+            } finally {
+                btn.disabled = false;
+                btn.textContent = 'ورود به پنل';
+            }
+        });
+    </script>
+</body>
+</html>
